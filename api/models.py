@@ -23,3 +23,4 @@ class Client(models.Model):
     passport_number = models.CharField(unique=True, max_length=255)
     status = models.CharField(max_length=2, choices=ACCOUNT_CHOICES)
     pin_code = models.CharField(unique=True, max_length=255)
+    balance = models.DecimalField(decimal_places=2, max_digits=10)
