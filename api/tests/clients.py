@@ -45,53 +45,50 @@ class ClientTestCase(TransactionTestCase):
         response = self.register_client(email, passport)
         self.assertTrue(response.status_code == 409)
 
-    def log_in(self, client):
+    def log_in(self, status=""):
+        response = self.register_client()
+        client_id = response.data["client_id"]
+        client = Client.objects.get(id=client_id)
+        if not status:
+            client.status = Client.ACTIVE
+        else:
+            client.status = status
+        client.save()
+        client.refresh_from_db()
         pin_code = client.pin_code
         data = {
                 "pin_code": pin_code,
                 }
         url = '/api/1/log_in/'
         response = self.client.post(url, json.dumps(data), content_type="application/json")
-        return response
+        return response, client
 
     # client cannot log in inactive account (mb should get a message)
     def test_client_cannot_log_in_to_inactive_account(self):
-        response = self.register_client()
-        client_id = response.data["client_id"]
-        client = Client.objects.get(id=client_id)
-        response = self.log_in(client)
+        response, _ = self.log_in(Client.INACTIVE_OPEN)
         self.assertTrue(response.status_code == 401)
 
     # client can log in to an active account by /api/version/login_by_pin_code POST{"pin_code": int_code}
     def test_client_cannot_log_in_to_active_account(self):
-        response = self.register_client()
-        client_id = response.data["client_id"]
-        client = Client.objects.get(id=client_id)
-        client.status = Client.ACTIVE
-        client.save()
-        client.refresh_from_db()
-        response = self.log_in(client)
+        response, _ = self.log_in()
         self.assertTrue(response.status_code == 200)
-
 
     def close_client(self):
         response = self.client.put('/api/1/close_account/', json.dumps({}))
         return response
 
-
     # Clients can close their account, then account becomes inactive and waits for manager to delete it
     def test_client_close_active_account(self):
-        response = self.register_client()
-        client_id = response.data["client_id"]
-        client = Client.objects.get(id=client_id)
-        client.status = Client.ACTIVE
-        client.save()
-        client.refresh_from_db()
-        response = self.log_in(client)
+        response, client = self.log_in()
         self.assertTrue(response.status_code == 200)
         response = self.close_client()
         self.assertTrue(response.status_code == 200)
         client.refresh_from_db()
         self.assertTrue(client.status == Client.INACTIVE_CLOSED)
 
-
+    def test_client_get_profile(self):
+        response, client = self.log_in()
+        self.assertTrue(response.status_code == 200)
+        response = self.client.get('/api/1/profile/')
+        self.assertTrue(response.status_code == 200)
+        self.assertTrue(response.data['balance'] == client.balance)

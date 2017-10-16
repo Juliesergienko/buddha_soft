@@ -6,7 +6,7 @@ def register(body):
     try:
         pin_code = uuid.uuid1()
         user = User.objects.create(
-                username=body['first_name'] + body['last_name'],
+                username=body['email'],
                 password=pin_code
                 )
         client = Client.objects.create(
@@ -35,8 +35,13 @@ def get_user_to_log_in(pin_code):
     except Exception as e:
         return None
 
+
 def close_account(user):
     client = Client.objects.get(user=user)
     client.status = Client.INACTIVE_CLOSED
     client.save()
-    
+
+
+def get_balance(user):
+    client = Client.objects.get(user=user)
+    return client.balance
