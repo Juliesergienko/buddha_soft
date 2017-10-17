@@ -27,7 +27,7 @@ Managers can:
 Response: {"client_list": [{"id": int_client)id, "status": "string_client_status"}, {},]}
 2. confirm new account - if authorised - by /api/version_number/approve/client_id/activate/ PUT
 Response: {"status_code": 200 or 401}
-3. confirm new account - if authorised - by /api/version_number/approve/client_id/activate/ PUT
+3. confirm deleted account - if authorised - by /api/version_number/approve/client_id/delete/ PUT
 Response: {"status_code": 200 or 401}
 
 Backend implementation:
